@@ -57,7 +57,7 @@ import (
 
 func TestClient_LongQuery(t *testing.T) {
 	sid := rand.Int31()
-	conn, err := net.Dial("udp", "versai.pro:19132")
+	conn, err := net.Dial("udp", "velvetpractice.live:19132")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,12 @@ func TestClient_LongQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(ct)
+	data, players, err := fullStat(conn, sid, ct)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(data)
+	t.Log(players)
 }
 
 func BenchmarkClient_LongQuery(b *testing.B) {

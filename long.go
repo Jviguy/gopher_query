@@ -58,6 +58,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -114,7 +115,7 @@ func (c Client) LongQuery(addr string) (LongQueryResponse, error) {
 }
 
 func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, error) {
-	buf := &bytes.Buffer{}
+	buf := &strings.Builder{}
 	info := make(map[string]string)
 	err := binary.Write(buf, binary.BigEndian, uint16(Magik))
 	if err != nil {
@@ -131,25 +132,22 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 	}
 	//Pad 4
 	buf.Write([]byte{0, 0, 0, 0})
-	_, err = conn.Write(buf.Bytes())
+	_, err = conn.Write([]byte(buf.String()))
 	if err != nil {
 		return info, nil, err
 	}
 	buf.Reset()
+	//GC it
+	buf = nil
 	tmp := make([]uint8, math.MaxUint16)
 	_, err = conn.Read(tmp)
 	if err != nil {
 		return info, nil, err
 	}
-	buf.Write(tmp)
-	id, err := buf.ReadByte()
-	if err != nil {
-		return info, nil, err
-	}
+	id := tmp[0]
 	if id == Stat {
 		playerKey := [...]byte{0x00, 0x01, 'p', 'l', 'a', 'y', 'e', 'r', '_', 0x00, 0x00}
-		_ = buf.Next(15)
-		bs := buf.Bytes()
+		bs := tmp[16:]
 		data := bs
 		playerIndex := bytes.Index(bs, playerKey[:])
 		if playerIndex != -1 {
@@ -159,9 +157,14 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 		if len(vals) % 2 != 0 {
 			vals = vals[:len(vals)-1]
 		}
-		for i := 0; i < len(vals); i += 2 {
-			info[string(vals[i])] = string(vals[i+1])
-		}
+		var wg sync.WaitGroup
+		go func() {
+			wg.Add(1)
+			for i := 0; i < len(vals); i += 2 {
+				info[string(vals[i])] = string(vals[i+1])
+			}
+			wg.Done()
+		}()
 		if playerIndex != -1 {
 			players := make([]string, 0)
 			pD := data[playerIndex+len(playerKey):]
@@ -170,8 +173,13 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 				if len(vals[i]) == 0 {
 					break
 				}
-				players = append(players, string(vals[i]))
+				go func(i int) {
+					wg.Add(1)
+					players = append(players, string(vals[i]))
+					wg.Done()
+				}(i)
 			}
+			wg.Wait()
 			return info, players, nil
 		}
 		return info, nil, nil
