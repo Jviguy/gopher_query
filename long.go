@@ -58,7 +58,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const (
@@ -152,19 +151,14 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 		if playerIndex != -1 {
 			bs = bs[:playerIndex]
 		}
-		var wg = &sync.WaitGroup{}
 		vals := bytes.Split(bs, []byte{0x00})
 
 		if len(vals) % 2 != 0 {
 			vals = vals[:len(vals)-1]
 		}
-		go func() {
-			wg.Add(1)
-			for i := 0; i < len(vals); i += 2 {
-				info[string(vals[i])] = string(vals[i+1])
-			}
-			wg.Done()
-		}()
+		for i := 0; i < len(vals); i += 2 {
+			info[string(vals[i])] = string(vals[i+1])
+		}
 		if playerIndex != -1 {
 			pD := data[playerIndex+len(playerKey):]
 			vals := bytes.Split(pD, []byte{0x00})
@@ -175,10 +169,8 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 				}
 				players = append(players, string(vals[i]))
 			}
-			wg.Wait()
 			return info, players, nil
 		}
-		wg.Wait()
 		return info, nil, nil
 	}
 	return info, nil, fmt.Errorf("invalid packet recieved while awaiting resp, id: %v", id)
