@@ -110,7 +110,6 @@ func (c Client) ShortQuery(addr string) (ShortQueryResponse, error) {
 	resp.GameEdition = body[0]
 	resp.MOTD = make([]string, 2)
 	resp.MOTD[0] = body[1]
-	resp.MOTD[1] = body[7]
 	proto, err := strconv.Atoi(body[2])
 	if err != nil {
 		return resp, err
@@ -128,6 +127,9 @@ func (c Client) ShortQuery(addr string) (ShortQueryResponse, error) {
 	}
 	resp.MaxPlayerCount = mpc
 	resp.ServerUID = body[6]
-	resp.GameMode = body[8]
+	if len(body) > 7 {
+		resp.MOTD[1] = body[7]
+		resp.GameMode = body[8]
+	}
 	return resp, err
 }
