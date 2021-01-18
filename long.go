@@ -166,18 +166,14 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 			wg.Done()
 		}()
 		if playerIndex != -1 {
-			players := make([]string, 0)
 			pD := data[playerIndex+len(playerKey):]
 			vals := bytes.Split(pD, []byte{0x00})
+			players := make([]string, 0, len(vals))
 			for i := 0; i < len(vals); i++ {
 				if len(vals[i]) == 0 {
 					break
 				}
-				go func(i int) {
-					wg.Add(1)
-					players = append(players, string(vals[i]))
-					wg.Done()
-				}(i)
+				players = append(players, string(vals[i]))
 			}
 			wg.Wait()
 			return info, players, nil
