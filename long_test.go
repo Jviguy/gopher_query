@@ -50,6 +50,7 @@ SOFTWARE.
 package gopher_query
 
 import (
+	"fmt"
 	"math/rand"
 	"net"
 	"testing"
@@ -57,6 +58,7 @@ import (
 
 func TestClient_LongQuery(t *testing.T) {
 	sid := rand.Int31()
+	resp := LongQueryResponse{}
 	conn, err := net.Dial("udp", "velvetpractice.live:19132")
 	if err != nil {
 		t.Fatal(err)
@@ -69,8 +71,20 @@ func TestClient_LongQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(data)
-	t.Log(players)
+	resp.Players = players
+	resp.ServerSoftware = data["server_engine"]
+	resp.Plugins = data["plugins"]
+	resp.Whitelist = data["whitelist"]
+	resp.Version = data["version"]
+	resp.PlayerCount = data["numplayers"]
+	resp.MaxPlayers = data["maxplayers"]
+	resp.MapName = data["map"]
+	resp.HostPort = data["hostport"]
+	resp.HostName = data["hostname"]
+	resp.HostIp = data["hostip"]
+	resp.GameMode = data["gametype"]
+	resp.GameName = data["game_id"]
+	fmt.Println(resp)
 }
 
 func BenchmarkClient_LongQuery(b *testing.B) {
