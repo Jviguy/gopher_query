@@ -12,7 +12,7 @@ import "fmt"
 
 func main() {
   c := gopher_query.NewClient()
-  data, err := c.LongQuery("velvetpractice.live")
+  data, err := c.LongQuery("velvetpractice.live:19132")
   if err != nil {
     log.Fatal(err)
   }
