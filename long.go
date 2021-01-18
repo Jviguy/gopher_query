@@ -58,7 +58,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const (
@@ -137,10 +136,9 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 		return info, nil, err
 	}
 	buf.Reset()
-	//GC it
-	buf = nil
 	tmp := make([]uint8, math.MaxUint16)
 	_, err = conn.Read(tmp)
+	tmp = bytes.TrimRight(tmp, "\x00")
 	if err != nil {
 		return info, nil, err
 	}
@@ -154,17 +152,13 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 			bs = bs[:playerIndex]
 		}
 		vals := bytes.Split(bs, []byte{0x00})
+
 		if len(vals) % 2 != 0 {
 			vals = vals[:len(vals)-1]
 		}
-		var wg sync.WaitGroup
-		go func() {
-			wg.Add(1)
-			for i := 0; i < len(vals); i += 2 {
-				info[string(vals[i])] = string(vals[i+1])
-			}
-			wg.Done()
-		}()
+		for i := 0; i < len(vals); i += 2 {
+			info[string(vals[i])] = string(vals[i+1])
+		}
 		if playerIndex != -1 {
 			pD := data[playerIndex+len(playerKey):]
 			vals := bytes.Split(pD, []byte{0x00})
@@ -175,7 +169,6 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 				}
 				players = append(players, string(vals[i]))
 			}
-			wg.Wait()
 			return info, players, nil
 		}
 		return info, nil, nil
