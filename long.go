@@ -111,6 +111,7 @@ func (c Client) LongQuery(addr string) (LongQueryResponse, error) {
 	resp.HostIp = data["hostip"]
 	resp.GameMode = data["gametype"]
 	resp.GameName = data["game_id"]
+	fmt.Println(resp)
 	return resp, err
 }
 
