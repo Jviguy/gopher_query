@@ -111,7 +111,6 @@ func (c Client) LongQuery(addr string) (LongQueryResponse, error) {
 	resp.HostIp = data["hostip"]
 	resp.GameMode = data["gametype"]
 	resp.GameName = data["game_id"]
-	fmt.Println(resp)
 	return resp, err
 }
 
@@ -153,7 +152,7 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 		if playerIndex != -1 {
 			bs = bs[:playerIndex]
 		}
-		var wg = sync.WaitGroup{}
+		var wg = &sync.WaitGroup{}
 		vals := bytes.Split(bs, []byte{0x00})
 
 		if len(vals) % 2 != 0 {
