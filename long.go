@@ -58,6 +58,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -151,24 +152,34 @@ func fullStat(conn net.Conn, sid int32, ct int32) (map[string]string, []string, 
 		if playerIndex != -1 {
 			bs = bs[:playerIndex]
 		}
-		vals := bytes.Split(bs, []byte{0x00})
+		var wg sync.WaitGroup
+		go func() {
+			wg.Add(1)
+			vals := bytes.Split(bs, []byte{0x00})
 
-		if len(vals) % 2 != 0 {
-			vals = vals[:len(vals)-1]
-		}
-		for i := 0; i < len(vals); i += 2 {
-			info[string(vals[i])] = string(vals[i+1])
-		}
+			if len(vals) % 2 != 0 {
+				vals = vals[:len(vals)-1]
+			}
+			for i := 0; i < len(vals); i += 2 {
+				info[string(vals[i])] = string(vals[i+1])
+			}
+			wg.Done()
+		}()
 		if playerIndex != -1 {
 			pD := data[playerIndex+len(playerKey):]
 			vals := bytes.Split(pD, []byte{0x00})
 			players := make([]string, 0, len(vals))
-			for i := 0; i < len(vals); i++ {
-				if len(vals[i]) == 0 {
-					break
+			go func() {
+				wg.Add(1)
+				for i := 0; i < len(vals); i++ {
+					if len(vals[i]) == 0 {
+						break
+					}
+					players = append(players, string(vals[i]))
 				}
-				players = append(players, string(vals[i]))
-			}
+				wg.Done()
+			}()
+			wg.Wait()
 			return info, players, nil
 		}
 		return info, nil, nil
