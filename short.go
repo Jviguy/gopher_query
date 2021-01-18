@@ -77,7 +77,7 @@ type ShortQueryResponse struct {
 
 func (c Client) ShortQuery(addr string) (ShortQueryResponse, error) {
 	resp := ShortQueryResponse{}
-	conn, err := c.dialer.Dial("raknet", addr)
+	conn, err := c.dialer.Dial("udp", addr)
 	if err != nil {
 		return resp, err
 	}
