@@ -64,7 +64,7 @@ import (
 
 func TestClient_ShortQuery(t *testing.T) {
 	resp := ShortQueryResponse{}
-	conn, err := net.Dial("udp", "127.0.0.1:19133")
+	conn, err := net.Dial("udp", "velvetpractice.live:19132")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,18 +89,19 @@ func TestClient_ShortQuery(t *testing.T) {
 	}
 	buf.Reset()
 	var tmp = make([]uint8, math.MaxUint16)
-	_,err = conn.Read(tmp)
+	_, err = conn.Read(tmp)
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := strings.Split(string(tmp[16+len(magik):]), ";")
+	body := strings.Split(string(tmp[len(magik) + 19:]), ";")
+	t.Log(body[0])
 	resp.GameEdition = body[0]
 	resp.MOTD = make([]string, 2)
 	resp.MOTD[0] = body[1]
 	resp.MOTD[1] = body[7]
 	proto, err := strconv.Atoi(body[2])
 	if err != nil {
-		t.Fatal(body)
+		t.Fatal(err)
 	}
 	resp.ProtocolVersion = proto
 	resp.GameVersion = body[3]
@@ -116,5 +117,4 @@ func TestClient_ShortQuery(t *testing.T) {
 	resp.MaxPlayerCount = mpc
 	resp.ServerUID = body[6]
 	resp.GameMode = body[8]
-	t.Log(resp)
 }

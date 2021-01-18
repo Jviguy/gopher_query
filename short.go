@@ -106,7 +106,7 @@ func (c Client) ShortQuery(addr string) (ShortQueryResponse, error) {
 	if err != nil {
 		return resp, err
 	}
-	body := strings.Split(string(tmp), ";")
+	body := strings.Split(string(tmp[len(magik) + 19:]), ";")
 	resp.GameEdition = body[0]
 	resp.MOTD = make([]string, 2)
 	resp.MOTD[0] = body[1]
